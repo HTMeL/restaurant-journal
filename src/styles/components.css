@@ -489,3 +489,10 @@
   color: var(--color-hero-text);
   line-height: 1.6;
 }
+
+/* "Forgot password?" sits under the password field, left-aligned with the text above it */
+.link-button {
+  align-self: flex-start;
+  min-height: var(--tap);
+  padding-inline: 0;
+}

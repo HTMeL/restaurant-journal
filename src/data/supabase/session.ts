@@ -1,5 +1,5 @@
 import type { SessionRepository, SessionState } from '../repositories'
-import { currentUser, forgetHousehold, supabase, unwrap } from './client'
+import { currentUser, forgetHousehold, isRecovering, setRecovering, supabase, unwrap } from './client'
 
 const listeners = new Set<() => void>()
 let wired = false
@@ -21,12 +21,16 @@ function friendly(message: string): string {
   if (/email not confirmed/i.test(message)) return 'Please confirm your email first. Check your inbox for the link.'
   if (/already registered/i.test(message)) return 'There is already an account with that email. Try signing in.'
   if (/password/i.test(message) && /characters/i.test(message)) return 'Use a password with at least 8 characters.'
+  if (/rate limit/i.test(message)) return 'Too many emails were sent. Please wait a few minutes and try again.'
+  if (/session missing|not authenticated/i.test(message)) return 'This reset link is no longer valid. Request a new one.'
+  if (/different from the old password/i.test(message)) return 'Choose a password you have not used before.'
   return message
 }
 
 export const session: SessionRepository = {
   async getState(): Promise<SessionState> {
     const user = await currentUser()
+    if (isRecovering()) return { status: 'recovering', email: user?.email ?? '' }
     if (!user) return { status: 'signedOut' }
     const member = unwrap(await supabase().from('members').select('id').eq('user_id', user.id).maybeSingle())
     return member ? { status: 'ready', email: user.email } : { status: 'needsHousehold', email: user.email ?? '' }
@@ -45,7 +49,18 @@ export const session: SessionRepository = {
     if (error) throw new Error(friendly(error.message))
     return { confirmationRequired: !data.session }
   },
+  async requestPasswordReset(email) {
+    const { error } = await supabase().auth.resetPasswordForEmail(email.trim(), { redirectTo: window.location.origin })
+    if (error) throw new Error(friendly(error.message))
+  },
+  async updatePassword(password) {
+    const { error } = await supabase().auth.updateUser({ password })
+    if (error) throw new Error(friendly(error.message))
+    setRecovering(false)
+    notify()
+  },
   async signOut() {
+    setRecovering(false)
     const { error } = await supabase().auth.signOut()
     if (error) throw new Error(error.message)
     notify()

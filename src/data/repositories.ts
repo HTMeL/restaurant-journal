@@ -69,6 +69,8 @@ export interface HouseholdRepository {
 export type SessionState =
   | { status: 'signedOut' }
   | { status: 'needsHousehold'; email: string }
+  /** Opened from a password reset email: the person must choose a new password. */
+  | { status: 'recovering'; email: string }
   | { status: 'ready'; email?: string }
 
 export interface SessionRepository {
@@ -79,6 +81,10 @@ export interface SessionRepository {
   /** `confirmationRequired` is true when the project wants the email confirmed first. */
   signUp(email: string, password: string): Promise<{ confirmationRequired: boolean }>
   signOut(): Promise<void>
+  /** Emails a reset link. Never reveals whether the address has an account. */
+  requestPasswordReset(email: string): Promise<void>
+  /** Sets a new password for the person who opened a reset link. */
+  updatePassword(password: string): Promise<void>
   /** First adult: starts a household and gets a code to share. */
   createHousehold(displayName: string): Promise<void>
   /** Second adult: joins with the code from the first. */

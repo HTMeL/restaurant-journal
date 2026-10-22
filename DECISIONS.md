@@ -149,3 +149,20 @@ The top of the sign-in screen now follows the new Figma design (frame "Frame 2")
 - **Icon** is the SVG exported from the design, used as is.
 - **Headline size** is 40px as designed, scaling down slightly on very narrow phones so it stays on two lines.
 - **Copy** is exactly as written in the design, including "for you family" (probably meant "your family") and the repeated "Your dining story".
+
+## Password reset
+
+**Built**
+- **Forgot password?** under the password field on sign-in opens a small form that emails a reset link. After sending, the screen says "If there is an account for that email, a reset link is on its way." whether or not the address is registered, so the form can't be used to find out who has an account.
+- The link returns to the app on a **Choose a new password** screen (new password, confirm, at least 8 characters). Saving signs the person in. "Back to sign in" abandons the reset.
+- Supabase's recovery flow does the security work: a one-time link, a short-lived session limited to changing the password, and `updateUser` to set it.
+
+**Why**
+- *A dedicated screen rather than a settings option,* because someone resetting a password has no usable session yet, and the reset link must lead somewhere that asks for a new password immediately.
+- *The recovery state is kept in the data layer* (`SessionState` gains `recovering`), like the other sign-in states, so the screens stay free of Supabase details and local mode is unaffected.
+- *The recovery flag is registered the moment the Supabase client is created,* and also read from the link's `type=recovery`, because the recovery event can fire before any screen is listening.
+
+**Not built**
+- A "your link expired" message. An expired link lands on the normal sign-in screen, and the person can request another.
+- Changing your password while signed in, changing your email, or deleting your account.
+- A confirmation email after the password changes (Supabase can send one; it is a dashboard setting).

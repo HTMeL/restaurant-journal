@@ -10,9 +10,24 @@ const key = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY
 
 export const isSupabaseConfigured = Boolean(url && key)
 
+// True while someone who opened a password reset link still has to choose a new password.
+// The link lands with "type=recovery" in the address, and Supabase also fires a
+// PASSWORD_RECOVERY event; the listener is registered the moment the client is created
+// so that event can't be missed.
+let recovering = typeof window !== 'undefined' && /[#&?]type=recovery(&|$)/.test(window.location.hash)
+export const isRecovering = () => recovering
+export const setRecovering = (value: boolean) => {
+  recovering = value
+}
+
 let client: SupabaseClient | undefined
 export function supabase(): SupabaseClient {
-  client ??= createClient(url!, key!)
+  if (!client) {
+    client = createClient(url!, key!)
+    client.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') recovering = true
+    })
+  }
   return client
 }
 

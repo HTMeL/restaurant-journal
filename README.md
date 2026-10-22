@@ -46,6 +46,10 @@ The app has two data modes behind the same repository interfaces. Components nev
 4. Optional for development: under **Authentication, Sign In / Providers, Email**, turn off **Confirm email** so a new account can sign in immediately. Leave it on for anything real.
 5. Restart `npm run dev` after changing `.env.local`.
 
+### Password reset
+
+On the sign-in screen, **Forgot password?** emails a reset link. Opening it brings the person back to the app on a **Choose a new password** screen, and after saving they are signed in. The link goes to the address the app is running on, so that address (for example `https://restaurant-journal-dl-mel.vercel.app`) must be in the **Redirect URLs** under Authentication, URL Configuration. Supabase's built-in email sender allows only a few emails per hour; add your own SMTP provider under Authentication before sharing the app widely.
+
 ### How it works
 
 - **Accounts:** each adult creates an account with email and password. After the first sign-in, one adult starts a household (this generates a code like `3F9A-C21B-7D04`) and the other joins with that code. A household has at most two adults.
@@ -55,6 +59,6 @@ The app has two data modes behind the same repository interfaces. Components nev
 
 ### Known limits
 
-- No password reset yet, and no live updates: the other adult's changes appear when you reload.
+- No live updates: the other adult's changes appear when you reload.
 - Data saved in local mode is not copied to Supabase.
 - Deleting a place with visits is not offered, so photo files are never orphaned. If you add that later, delete the photo files with the rows.

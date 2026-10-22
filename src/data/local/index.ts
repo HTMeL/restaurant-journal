@@ -173,6 +173,8 @@ const session: SessionRepository = {
   signIn: async () => {},
   signUp: async () => ({ confirmationRequired: false }),
   signOut: async () => {},
+  requestPasswordReset: async () => {},
+  updatePassword: async () => {},
   createHousehold: async () => {},
   joinHousehold: async () => {},
 }
